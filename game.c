@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <ctype.h>
+#include "words.h"
 
 #define WORD_LEN 5
 #define TRIES 6
@@ -8,20 +12,50 @@
 #define YELLOW "\x1b[33m"
 #define RESET "\x1b[0m"
 
+char* generate_secret_word(char *words[], int size){
+    int index = rand() % size;
+    return words[index];
+}
+
+void to_uppercase_guess(char *guess){
+    while (*guess){
+        *guess = (char)toupper((unsigned char)*guess);
+        guess++;
+    }
+}
+
 int main(){
-    char secret_word[] = "sigma";
-    char guess[WORD_LEN + 1];
+    srand(time(NULL));
+    int word_bank_size = sizeof(word_bank) / sizeof(word_bank[0]);
+    char *secret_word = generate_secret_word(word_bank, word_bank_size);
+    char secret_word_upper[WORD_LEN + 1];
+    strcpy(secret_word_upper, secret_word);
+    to_uppercase_guess(secret_word_upper);
+    secret_word = secret_word_upper;
+    char guess[100];
     int won = 0;
     int i,j,k;
-
+    
     for (i = 0; i < TRIES; i++){
-        printf("\n Try %d/%d. Pls insert a 5 letter word: ", i + 1, TRIES);
-        if (scanf("%5s", guess) != 1) break;
+        while(1){
+            printf("\n Try %d/%d. Pls insert a 5 letter word: ", i + 1, TRIES);
 
-        int c;
-        while ((c = getchar()) != '\n' && c != EOF);
-        
+            if (!fgets(guess, sizeof(guess), stdin)){
+                printf("Error reading input\n");
+                return 1;
+            }
 
+            guess[strcspn(guess, "\n")] = '\0';
+
+            if (strlen(guess) != WORD_LEN){
+                printf("Invalid Input! The guess must be exactly 5 letters\n");
+                continue;
+            }
+            break;
+        }
+
+        to_uppercase_guess(guess);
+    
         if (!strcmp(secret_word, guess)){
                 printf("You guessed the secret word!!\n");
                 won = 1;
@@ -64,6 +98,9 @@ int main(){
         printf("\n");
     }
 
-    
+    if (!won){
+        printf("You lost! the secret word is: %s\n", secret_word);
+    }
+
     return 0;
 }
